@@ -22,31 +22,26 @@ namespace RoslynPad.UI
         private static readonly Version _currentVersion = new Version(0, 11);
         private static readonly string _currentVersionVariant = "";
 
-        public const string NuGetPathVariableName = "$NuGet";
-
         private OpenDocumentViewModel _currentOpenDocument;
         private bool _hasUpdate;
         private double _editorFontSize;
 
         public DocumentViewModel DocumentRoot { get; private set; }
-        public NuGetConfiguration NuGetConfiguration { get; }
         public RoslynHost RoslynHost { get; }
 
         [ImportingConstructor]
-        public MainViewModel(IServiceLocator serviceLocator, ITelemetryProvider telemetryProvider, ICommandProvider commands, NuGetViewModel nugetViewModel)
+        public MainViewModel(IServiceLocator serviceLocator, ITelemetryProvider telemetryProvider, ICommandProvider commands)
         {
             _serviceLocator = serviceLocator;
             _telemetryProvider = telemetryProvider;
             _telemetryProvider.Initialize(_currentVersion.ToString());
             _telemetryProvider.LastErrorChanged += () => OnPropertyChanged(nameof(LastError));
 
-            NuGet = nugetViewModel;
-            NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
-            RoslynHost = new RoslynHost(NuGetConfiguration, new[]
+            RoslynHost = new RoslynHost(null, new[]
             {
                 // TODO: xplat
                 Assembly.Load("RoslynPad.Roslyn.Windows"),
-                Assembly.Load("RoslynPad.Editor.Windows")
+                Assembly.Load("RoslynPad.Editor.Windows"),
             });
 
             NewDocumentCommand = commands.Create(CreateNewDocument);
@@ -57,14 +52,14 @@ namespace RoslynPad.UI
 
             _editorFontSize = Properties.Settings.Default.EditorFontSize;
 
-            DocumentRoot = CreateDocumentRoot();
-
             OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
             OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
         }
 
-        public void Initialize()
+        public void Initialize(CSharpScriptEngine scriptEngine)
         {
+            this.scriptEngine = scriptEngine;
+            DocumentRoot = CreateDocumentRoot();
             OpenAutoSavedDocuments();
 
             if (HasCachedUpdate())
@@ -101,6 +96,7 @@ namespace RoslynPad.UI
         {
             var d = _serviceLocator.GetInstance<OpenDocumentViewModel>();
             d.SetDocument(documentViewModel);
+            d.ScriptEngine = scriptEngine;
             return d;
         }
 
@@ -187,26 +183,18 @@ namespace RoslynPad.UI
         {
             var root = DocumentViewModel.CreateRoot(GetUserDocumentPath());
 
-            // TODO: virtual samples
-            //if (!Directory.Exists(Path.Combine(root.Path, "Samples")))
-            //{
-            //    // ReSharper disable once PossibleNullReferenceException
-            //    using (var stream = Application.GetResourceStream(
-            //        new Uri("pack://application:,,,/RoslynPad;component/Resources/Samples.zip")).Stream)
-            //    using (var archive = new ZipArchive(stream))
-            //    {
-            //        archive.ExtractToDirectory(root.Path);
-            //    }
-            //}
-
             Documents = root.Children;
 
             return root;
         }
 
+        public string DocumentPath { get; set; }
 
-        internal static string GetUserDocumentPath()
+        internal string GetUserDocumentPath()
         {
+            if (!string.IsNullOrEmpty(DocumentPath) && Directory.Exists(DocumentPath))
+                return DocumentPath;
+
             var userDefinedPath = Properties.Settings.Default.DocumentPath;
             return !string.IsNullOrEmpty(userDefinedPath) && Directory.Exists(userDefinedPath)
                 ? userDefinedPath
@@ -237,8 +225,6 @@ namespace RoslynPad.UI
             }
         }
 
-        public NuGetViewModel NuGet { get; }
-
         public ObservableCollection<OpenDocumentViewModel> OpenDocuments { get; }
 
         public OpenDocumentViewModel CurrentOpenDocument
@@ -248,6 +234,7 @@ namespace RoslynPad.UI
         }
 
         private ObservableCollection<DocumentViewModel> _documents;
+        private CSharpScriptEngine scriptEngine;
 
         public ObservableCollection<DocumentViewModel> Documents
         {

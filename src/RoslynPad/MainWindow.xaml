@@ -15,6 +15,7 @@
         Title="{Binding WindowTitle, Mode=OneTime}"
         Height="600"
         Width="800"
+        Icon="Resources/RoslynPad.ico"
         Name="This">
 
     <FrameworkElement.InputBindings>
@@ -129,7 +130,7 @@
                                                        CanFloat="False"
                                                        CanAutoHide="True"
                                                        AutoHideWidth="200"
-                                                       Title="Documents">
+                                                       Title="Scripts">
                                     <DockPanel x:Name="DocumentTree">
                                         <StackPanel Orientation="Horizontal"
                                                     DockPanel.Dock="Bottom"

@@ -30,6 +30,7 @@ namespace RoslynPad
         private RoslynHost _roslynHost;
         private OpenDocumentViewModel _viewModel;
         private IQuickInfoProvider _quickInfoProvider;
+        private CSharpScriptEngine scriptEngine;
 
         public DocumentView()
         {
@@ -70,7 +71,6 @@ namespace RoslynPad
         private async void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs args)
         {
             _viewModel = (OpenDocumentViewModel)args.NewValue;
-            _viewModel.NuGet.PackageInstalled += NuGetOnPackageInstalled;
 
             _viewModel.EditorFocus += (o, e) => Editor.Focus();
 
@@ -135,19 +135,6 @@ namespace RoslynPad
             Editor.FontSize = fontSize;
         }
 
-        private void NuGetOnPackageInstalled(NuGetInstallResult installResult)
-        {
-            if (installResult.References.Count == 0) return;
-
-            var text = string.Join(Environment.NewLine,
-                installResult.References.Distinct().Select(r => Path.Combine(MainViewModel.NuGetPathVariableName, r))
-                .Concat(installResult.FrameworkReferences.Distinct())
-                .Where(r => !_roslynHost.HasReference(_viewModel.DocumentId, r))
-                .Select(r => "#r \"" + r + "\"")) + Environment.NewLine;
-
-            Dispatcher.InvokeAsync(() => Editor.Document.Insert(0, text, AnchorMovementType.Default));
-        }
-
         private void ProcessDiagnostics(DiagnosticsUpdatedArgs args)
         {
             _textMarkerService.RemoveAll(x => true);
@@ -183,16 +170,6 @@ namespace RoslynPad
             }
         }
 
-        protected override void OnPreviewKeyDown(KeyEventArgs e)
-        {
-            base.OnPreviewKeyDown(e);
-            if (e.Key == Key.T && e.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control))
-            {
-                e.Handled = true;
-                NuGetSearch.Focus();
-            }
-        }
-        
         private void Editor_OnLoaded(object sender, RoutedEventArgs e)
         {
             Editor.Focus();
@@ -228,24 +205,6 @@ namespace RoslynPad
 
         private void SearchTerm_OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Down && _viewModel.NuGet.Packages?.Any() == true)
-            {
-                if (!_viewModel.NuGet.IsPackagesMenuOpen)
-                {
-                    _viewModel.NuGet.IsPackagesMenuOpen = true;
-                }
-                RootNuGetMenu.Focus();
-            }
-            else if (e.Key == Key.Enter)
-            {
-                e.Handled = true;
-                Editor.Focus();
-            }
-        }
-
-        private void ScrollViewer_OnScrollChanged(object sender, ScrollChangedEventArgs e)
-        {
-            HeaderScroll.ScrollToHorizontalOffset(e.HorizontalOffset);
         }
     }
 }

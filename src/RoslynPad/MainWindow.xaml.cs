@@ -26,7 +26,7 @@ namespace RoslynPad
         private bool _isClosing;
         private bool _isClosed;
 
-        internal MainWindow()
+        public MainWindow(CSharpScriptEngine scriptEngine, string documentPath = null)
         {
             var container = new ContainerConfiguration()
                 .WithAssembly(typeof(MainViewModel).Assembly)   // RoslynPad.Common.UI
@@ -34,7 +34,8 @@ namespace RoslynPad
             var locator = container.CreateContainer().GetExport<IServiceLocator>();
 
             _viewModel = locator.GetInstance<MainViewModel>();
-            _viewModel.Initialize();
+            _viewModel.DocumentPath = documentPath;
+            _viewModel.Initialize(scriptEngine);
 
             DataContext = _viewModel;
             InitializeComponent();

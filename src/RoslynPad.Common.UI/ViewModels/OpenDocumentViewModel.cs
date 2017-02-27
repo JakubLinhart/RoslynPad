@@ -14,7 +14,6 @@ using Microsoft.CodeAnalysis.Scripting;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Practices.ServiceLocation;
 using NuGet.Versioning;
-using RoslynPad.Hosting;
 using RoslynPad.Roslyn.Diagnostics;
 using RoslynPad.Roslyn.Rename;
 using RoslynPad.Runtime;
@@ -29,7 +28,6 @@ namespace RoslynPad.UI
         private string _workingDirectory;
         private readonly Dispatcher _dispatcher;
 
-        private ExecutionHost _executionHost;
         private ObservableCollection<ResultObject> _results;
         private CancellationTokenSource _cts;
         private bool _isRunning;
@@ -41,19 +39,6 @@ namespace RoslynPad.UI
         private Action<ExceptionResultObject> _onError;
         private Func<TextSpan> _getSelection;
 
-        public IEnumerable<object> Results => _results;
-
-        private ObservableCollection<ResultObject> ResultsInternal
-        {
-            // ReSharper disable once UnusedMember.Local
-            get { return _results; }
-            set
-            {
-                _results = value;
-                OnPropertyChanged(nameof(Results));
-            }
-        }
-
         public DocumentViewModel Document { get; private set; }
 
         [ImportingConstructor]
@@ -62,20 +47,10 @@ namespace RoslynPad.UI
             _serviceLocator = serviceLocator;
             MainViewModel = mainViewModel;
             CommandProvider = commands;
-            NuGet = serviceLocator.GetInstance<NuGetDocumentViewModel>();
             _dispatcher = Dispatcher.CurrentDispatcher;
-
-            var roslynHost = mainViewModel.RoslynHost;
-
-            Platform = Platform.X86;
-            _executionHost = new ExecutionHost(GetHostExeName(), _workingDirectory,
-                roslynHost.DefaultReferences.OfType<PortableExecutableReference>().Select(x => x.FilePath),
-                roslynHost.DefaultImports, mainViewModel.NuGetConfiguration);
 
             SaveCommand = commands.CreateAsync(() => Save(promptSave: false));
             RunCommand = commands.CreateAsync(Run, () => !IsRunning);
-            CompileAndSaveCommand = commands.CreateAsync(CompileAndSave);
-            RestartHostCommand = commands.CreateAsync(RestartHost);
             FormatDocumentCommand = commands.CreateAsync(FormatDocument);
             CommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Comment));
             UncommentSelectionCommand = commands.CreateAsync(() => CommentUncommentSelection(CommentAction.Uncomment));
@@ -167,42 +142,6 @@ namespace RoslynPad.UI
             var document = MainViewModel.RoslynHost.GetDocument(DocumentId);
             var formattedDocument = await Formatter.FormatAsync(document).ConfigureAwait(false);
             MainViewModel.RoslynHost.UpdateDocument(formattedDocument);
-        }
-
-        private string GetHostExeName()
-        {
-            switch (Platform)
-            {
-                case Platform.X86:
-                    return "RoslynPad.Host32.exe";
-                case Platform.X64:
-                    return "RoslynPad.Host64.exe";
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(Platform));
-            }
-        }
-
-        public Platform Platform
-        {
-            get { return _platform; }
-            set
-            {
-                if (SetProperty(ref _platform, value))
-                {
-                    if (_executionHost != null)
-                    {
-                        _executionHost.HostPath = GetHostExeName();
-                        RestartHostCommand.Execute();
-                    }
-                }
-            }
-        }
-
-        private async Task RestartHost()
-        {
-            Reset();
-            await _executionHost.ResetAsync().ConfigureAwait(false);
-            SetIsRunning(false);
         }
 
         private void SetIsRunning(bool value)
@@ -304,7 +243,6 @@ namespace RoslynPad.UI
             // ReSharper disable once AssignNullToNotNullAttribute
             DocumentId = roslynHost.AddDocument(sourceTextContainer, _workingDirectory, onDiagnosticsUpdated,
                 onTextUpdated);
-            await _executionHost.ResetAsync().ConfigureAwait(false);
         }
 
         public DocumentId DocumentId { get; private set; }
@@ -312,17 +250,11 @@ namespace RoslynPad.UI
         public MainViewModel MainViewModel { get; }
         public ICommandProvider CommandProvider { get; }
 
-        public NuGetDocumentViewModel NuGet { get; }
-
         public string Title => Document != null && !Document.IsAutoSaveOnly ? Document.Name : "New";
 
         public IActionCommand SaveCommand { get; }
 
         public IActionCommand RunCommand { get; }
-
-        public IActionCommand CompileAndSaveCommand { get; }
-
-        public IActionCommand RestartHostCommand { get; }
 
         public IActionCommand FormatDocumentCommand { get; }
 
@@ -344,84 +276,29 @@ namespace RoslynPad.UI
             }
         }
 
-        private async Task CompileAndSave()
+        private async Task Run()
         {
-            var saveDialog = _serviceLocator.GetInstance<ISaveFileDialog>();
-            saveDialog.OverwritePrompt = true;
-            saveDialog.AddExtension = true;
-            saveDialog.Filter = "Libraries|*.dll|Executables|*.exe";
-            saveDialog.DefaultExt = "dll";
-            if (saveDialog.Show() != true) return;
-
-            var code = await GetCode(CancellationToken.None).ConfigureAwait(true);
-
-            var results = new ObservableCollection<ResultObject>();
-            ResultsInternal = results;
-
-            HookDumped(results, CancellationToken.None);
-
-            try
+            var selectedSpan = _getSelection();
+            if (selectedSpan.Length > 0)
             {
-                await Task.Run(() => _executionHost.CompileAndSave(code, saveDialog.FileName)).ConfigureAwait(true);
+                await Run(await GetCode(selectedSpan, CancellationToken.None), true);
             }
-            catch (CompilationErrorException ex)
+            else
             {
-                foreach (var diagnostic in ex.Diagnostics)
-                {
-                    results.Add(ResultObject.Create(diagnostic));
-                }
-            }
-            catch (Exception ex)
-            {
-                AddResult(ex, results, CancellationToken.None);
+                await Run(await GetCode(CancellationToken.None), false);
             }
         }
 
-        private async Task Run()
+        private async Task Run(string code, bool echo)
         {
-            if (IsRunning) return;
-
-            try
-            {
-                await EnsureNuGetPackages().ConfigureAwait(true);
-            }
-            catch (Exception)
-            {
-                IsRunning = false;
-                throw;
-            }
-
             Reset();
-
-            await MainViewModel.AutoSaveOpenDocuments().ConfigureAwait(true);
-
             SetIsRunning(true);
 
-            var results = new ObservableCollection<ResultObject>();
-            ResultsInternal = results;
-
-            var cancellationToken = _cts.Token;
-            HookDumped(results, cancellationToken);
             try
             {
-                var code = await GetCode(cancellationToken).ConfigureAwait(true);
-                var errorResult = await _executionHost.ExecuteAsync(code).ConfigureAwait(true);
-                _onError?.Invoke(errorResult);
-                if (errorResult != null)
-                {
-                    results.Add(errorResult);
-                }
-            }
-            catch (CompilationErrorException ex)
-            {
-                foreach (var diagnostic in ex.Diagnostics)
-                {
-                    results.Add(ResultObject.Create(diagnostic));
-                }
-            }
-            catch (Exception ex)
-            {
-                AddResult(ex, results, cancellationToken);
+                var cancellationToken = _cts.Token;
+                await ScriptEngine.Execute(code, echo, cancellationToken);
+
             }
             finally
             {
@@ -429,42 +306,16 @@ namespace RoslynPad.UI
             }
         }
 
-        private async Task EnsureNuGetPackages()
-        {
-            var nugetVariable = MainViewModel.NuGetConfiguration.PathVariableName;
-            var pathToRepository = MainViewModel.NuGetConfiguration.PathToRepository;
-            foreach (var directive in MainViewModel.RoslynHost.GetReferencesDirectives(DocumentId))
-            {
-                if (directive.StartsWith(nugetVariable, StringComparison.OrdinalIgnoreCase))
-                {
-                    var directiveWithoutRoot = directive.Substring(nugetVariable.Length + 1);
-                    if (!File.Exists(Path.Combine(pathToRepository, directiveWithoutRoot)))
-                    {
-                        var sections = directiveWithoutRoot.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
-                        NuGetVersion version;
-                        if (sections.Length > 2 && NuGetVersion.TryParse(sections[1], out version))
-                        {
-                            await NuGet.InstallPackage(sections[0], version, reportInstalled: false).ConfigureAwait(false);
-                        }
-                    }
-                }
-            }
-        }
-
-        private void HookDumped(ObservableCollection<ResultObject> results, CancellationToken cancellationToken)
-        {
-            if (_executionHostOnDumped != null)
-            {
-                _executionHost.Dumped -= _executionHostOnDumped;
-            }
-            _executionHostOnDumped = o => AddResult(o, results, cancellationToken);
-            _executionHost.Dumped += _executionHostOnDumped;
-        }
-
         private async Task<string> GetCode(CancellationToken cancellationToken)
         {
             return (await MainViewModel.RoslynHost.GetDocument(DocumentId).GetTextAsync(cancellationToken)
                 .ConfigureAwait(false)).ToString();
+        }
+
+        private async Task<string> GetCode(TextSpan codeSpan, CancellationToken cancellationToken)
+        {
+            var text = await MainViewModel.RoslynHost.GetDocument(DocumentId).GetTextAsync(cancellationToken).ConfigureAwait(false);
+            return text.GetSubText(codeSpan).ToString();
         }
 
         private void Reset()
@@ -475,25 +326,6 @@ namespace RoslynPad.UI
                 _cts.Dispose();
             }
             _cts = new CancellationTokenSource();
-        }
-
-        private void AddResult(object o, ObservableCollection<ResultObject> results, CancellationToken cancellationToken)
-        {
-            _dispatcher.InvokeAsync(() =>
-            {
-                var list = o as IList<ResultObject>;
-                if (list != null)
-                {
-                    foreach (var resultObject in list)
-                    {
-                        results.Add(resultObject);
-                    }
-                }
-                else
-                {
-                    results.Add(ResultObject.Create(o));
-                }
-            }, DispatcherPriority.SystemIdle, cancellationToken);
         }
 
         public async Task<string> LoadText()
@@ -511,8 +343,6 @@ namespace RoslynPad.UI
         public void Close()
         {
             _viewDisposable?.Dispose();
-            _executionHost?.Dispose();
-            _executionHost = null;
         }
 
         public bool IsDirty
@@ -520,6 +350,8 @@ namespace RoslynPad.UI
             get { return _isDirty; }
             private set { SetProperty(ref _isDirty, value); }
         }
+
+        public CSharpScriptEngine ScriptEngine { get; set; }
 
         public event EventHandler EditorFocus;
 
