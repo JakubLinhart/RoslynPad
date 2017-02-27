@@ -47,8 +47,8 @@ namespace RoslynPad.Roslyn
             {
                 Assembly.Load("System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"),
                 typeof(Microsoft.CSharp.RuntimeBinder.Binder).Assembly,
-                Assembly.Load("UltimaRX"),
-                Assembly.Load("UltimaRX.Proxy"),
+                Assembly.Load("Infusion"),
+                Assembly.Load("Infusion.Proxy"),
             })
             .ToImmutableArray();
 

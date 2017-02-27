@@ -19,12 +19,12 @@ namespace RoslynPad.UI
         {
             "using System;",
             "using System.Threading;",
-            "using UltimaRX.Proxy;",
-            "using UltimaRX.Packets;",
-            "using UltimaRX.Proxy.InjectionApi;",
-            "using UltimaRX.Packets.Parsers;",
-            "using UltimaRX.Gumps;",
-            "using static UltimaRX.Proxy.InjectionApi.Injection;"
+            "using Infusion.Proxy;",
+            "using Infusion.Packets;",
+            "using Infusion.Proxy.InjectionApi;",
+            "using Infusion.Packets.Parsers;",
+            "using Infusion.Gumps;",
+            "using static Infusion.Proxy.InjectionApi.Injection;"
         };
 
         private readonly IScriptOutput scriptOutput;
@@ -48,17 +48,15 @@ namespace RoslynPad.UI
             this.scriptOutput = scriptOutput;
             scriptOptions = ScriptOptions.Default
                 .WithReferences(
-                Assembly.Load("UltimaRX"),
-                Assembly.Load("UltimaRX.Proxy"));
+                Assembly.Load("Infusion"),
+                Assembly.Load("Infusion.Proxy"));
         }
 
         public async Task AddDefaultImports()
         {
             scriptOutput.Info("Initializing C# scripting...");
-            foreach (var import in Imports)
-            {
-                await Execute(import);
-            }
+            string importsScript = string.Join("\n", Imports);
+            await Execute(importsScript);
         }
 
         public async Task ExecuteScript(string scriptPath)
