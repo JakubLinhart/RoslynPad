@@ -68,6 +68,8 @@ namespace RoslynPad.UI
             scriptOptions = scriptOptions.WithSourceResolver(
                 ScriptSourceResolver.Default.WithSearchPaths(scriptDirectory));
 
+            Directory.SetCurrentDirectory(scriptDirectory);
+
             await Execute(scriptText, false);
         }
 
