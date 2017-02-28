@@ -24,7 +24,7 @@ namespace RoslynPad.UI
             "using Infusion.Proxy.LegacyApi;",
             "using Infusion.Packets.Parsers;",
             "using Infusion.Gumps;",
-            "using static Infusion.Proxy.LegacyApi.Injection;"
+            "using static Infusion.Proxy.LegacyApi.Legacy;"
         };
 
         private readonly IScriptOutput scriptOutput;

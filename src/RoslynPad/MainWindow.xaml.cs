@@ -128,13 +128,6 @@ namespace RoslynPad
             Properties.Settings.Default.DockLayout = document.ToString();
         }
 
-        protected override void OnClosed(EventArgs e)
-        {
-            base.OnClosed(e);
-
-            Application.Current.Shutdown();
-        }
-
         private void OnDocumentClick(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
