@@ -131,7 +131,7 @@ namespace RoslynPad
         {
             _dialog = new InlineModalDialog
             {
-                Owner = Application.Current.MainWindow,
+                Owner = Application.Current.Windows.OfType<MainWindow>().First(),
                 Content = this
             };
             _dialog.Show();

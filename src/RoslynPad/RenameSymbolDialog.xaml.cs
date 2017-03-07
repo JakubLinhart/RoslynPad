@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Composition;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -84,7 +85,7 @@ namespace RoslynPad
         {
             _dialog = new InlineModalDialog
             {
-                Owner = Application.Current.MainWindow,
+                Owner = Application.Current.Windows.OfType<MainWindow>().First(),
                 Content = this
             };
             _dialog.Show();

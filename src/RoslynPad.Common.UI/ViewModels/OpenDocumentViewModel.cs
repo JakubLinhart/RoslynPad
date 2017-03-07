@@ -279,17 +279,23 @@ namespace RoslynPad.UI
         private async Task Run()
         {
             var selectedSpan = _getSelection();
+            string code;
+            bool echo;
             if (selectedSpan.Length > 0)
             {
-                await Run(await GetCode(selectedSpan, CancellationToken.None), true);
+                code = await GetCode(selectedSpan, CancellationToken.None).ConfigureAwait(true);
+                echo = true;
             }
             else
             {
-                await Run(await GetCode(CancellationToken.None), false);
+                code = await GetCode(CancellationToken.None).ConfigureAwait(true);
+                echo = false;
             }
+
+            await Run(code, echo).ConfigureAwait(false);
         }
 
-        private async Task Run(string code, bool echo)
+        private Task Run(string code, bool echo)
         {
             Reset();
             SetIsRunning(true);
@@ -297,7 +303,7 @@ namespace RoslynPad.UI
             try
             {
                 var cancellationToken = _cts.Token;
-                await ScriptEngine.Execute(code, echo, cancellationToken);
+                return ScriptEngine.Execute(code, echo, cancellationToken);
 
             }
             finally

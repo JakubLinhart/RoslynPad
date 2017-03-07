@@ -73,38 +73,43 @@ namespace RoslynPad.UI
             await Execute(scriptText, false);
         }
 
-        public async Task<object> Execute(string code, bool echo = true, CancellationToken cancellationToken = default(CancellationToken))
+        public Task<object> Execute(string code, bool echo = true, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (echo)
-               scriptOutput.Echo(code);
-
-            try
+            return Task.Run(() =>
             {
-                scriptState = scriptState == null
-                    ? await CSharpScript.RunAsync(code, scriptOptions, cancellationToken: cancellationToken)
-                    : await scriptState.ContinueWithAsync(code, scriptOptions, cancellationToken);
+                if (echo)
+                    scriptOutput.Echo(code);
 
-                var resultText = scriptState?.ReturnValue?.ToString();
-                if (!string.IsNullOrEmpty(resultText))
+                try
                 {
-                    scriptOutput.Result(resultText);
-                    return scriptState.ReturnValue;
+                    scriptState = scriptState == null
+                        ? CSharpScript.RunAsync(code, scriptOptions, cancellationToken: cancellationToken)
+                            .Result
+                        : scriptState.ContinueWithAsync(code, scriptOptions, cancellationToken)
+                            .Result;
+
+                    var resultText = scriptState?.ReturnValue?.ToString();
+                    if (!string.IsNullOrEmpty(resultText))
+                    {
+                        scriptOutput.Result(resultText);
+                        return scriptState.ReturnValue;
+                    }
+
+                    scriptOutput.Info("OK");
+                }
+                catch (AggregateException ex)
+                {
+                    scriptOutput.Error(ex.InnerExceptions
+                        .Select(inner => inner.Message)
+                        .Aggregate((l, r) => l + Environment.NewLine + r));
+                }
+                catch (Exception ex)
+                {
+                    scriptOutput.Error(ex.Message);
                 }
 
-                scriptOutput.Info("OK");
-            }
-            catch (AggregateException ex)
-            {
-                scriptOutput.Error(ex.InnerExceptions
-                    .Select(inner => inner.Message)
-                    .Aggregate((l, r) => l + Environment.NewLine + r));
-            }
-            catch (Exception ex)
-            {
-                scriptOutput.Error(ex.Message);
-            }
-
-            return null;
+                return null;
+            }, cancellationToken);
         }
     }
 }

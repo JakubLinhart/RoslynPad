@@ -1,5 +1,6 @@
 ﻿using System.Composition;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -34,7 +35,7 @@ namespace RoslynPad
         {
             _dialog = new InlineModalDialog
             {
-                Owner = Application.Current.MainWindow,
+                Owner = Application.Current.Windows.OfType<MainWindow>().First(),
                 Content = this
             };
             _dialog.Show();
