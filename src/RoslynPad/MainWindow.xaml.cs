@@ -26,7 +26,7 @@ namespace RoslynPad
         private bool _isClosing;
         private bool _isClosed;
 
-        public MainWindow(CSharpScriptEngine scriptEngine, string documentPath = null)
+        public MainWindow(IScriptEngine scriptEngine, string documentPath = null)
         {
             var container = new ContainerConfiguration()
                 .WithAssembly(typeof(MainViewModel).Assembly)   // RoslynPad.Common.UI

@@ -45,8 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CSharpScriptEngine.cs" />
-    <Compile Include="IScriptOutput.cs" />
+    <Compile Include="IScriptEngine.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <DependentUpon>Settings.settings</DependentUpon>
       <AutoGen>True</AutoGen>

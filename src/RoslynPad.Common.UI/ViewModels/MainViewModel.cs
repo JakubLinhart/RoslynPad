@@ -56,7 +56,7 @@ namespace RoslynPad.UI
             OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
         }
 
-        public void Initialize(CSharpScriptEngine scriptEngine)
+        public void Initialize(IScriptEngine scriptEngine)
         {
             this.scriptEngine = scriptEngine;
             DocumentRoot = CreateDocumentRoot();
@@ -234,7 +234,7 @@ namespace RoslynPad.UI
         }
 
         private ObservableCollection<DocumentViewModel> _documents;
-        private CSharpScriptEngine scriptEngine;
+        private IScriptEngine scriptEngine;
 
         public ObservableCollection<DocumentViewModel> Documents
         {

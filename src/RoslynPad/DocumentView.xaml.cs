@@ -30,7 +30,6 @@ namespace RoslynPad
         private RoslynHost _roslynHost;
         private OpenDocumentViewModel _viewModel;
         private IQuickInfoProvider _quickInfoProvider;
-        private CSharpScriptEngine scriptEngine;
 
         public DocumentView()
         {

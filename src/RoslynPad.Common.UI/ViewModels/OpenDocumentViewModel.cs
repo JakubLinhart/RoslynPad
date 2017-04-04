@@ -357,7 +357,7 @@ namespace RoslynPad.UI
             private set { SetProperty(ref _isDirty, value); }
         }
 
-        public CSharpScriptEngine ScriptEngine { get; set; }
+        public IScriptEngine ScriptEngine { get; set; }
 
         public event EventHandler EditorFocus;
 
