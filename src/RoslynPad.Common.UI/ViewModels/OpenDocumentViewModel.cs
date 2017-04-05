@@ -231,7 +231,7 @@ namespace RoslynPad.UI
             }
         }
 
-        internal async Task Initialize(SourceTextContainer sourceTextContainer,
+        internal void Initialize(SourceTextContainer sourceTextContainer,
             Action<DiagnosticsUpdatedArgs> onDiagnosticsUpdated, Action<SourceText> onTextUpdated,
             Action<ExceptionResultObject> onError,
             Func<TextSpan> getSelection, IDisposable viewDisposable)
