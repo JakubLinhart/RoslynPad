@@ -48,7 +48,7 @@ namespace RoslynPad.Roslyn
                 Assembly.Load("System.Runtime, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"),
                 typeof(Microsoft.CSharp.RuntimeBinder.Binder).Assembly,
                 Assembly.Load("Infusion"),
-                Assembly.Load("Infusion.Proxy"),
+                Assembly.Load("Infusion.LegacyApi")
             })
             .ToImmutableArray();
 
@@ -350,6 +350,7 @@ namespace RoslynPad.Roslyn
                 allowUnsafe: true,
                 sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, workingDirectory),
                 metadataReferenceResolver: metadataReferenceResolver);
+            compilationOptions = compilationOptions.WithUsings("Infusion.LegacyApi", "Infusion.Packets", "Infusion.Gumps", "Infusion.Packets");
             return compilationOptions;
         }
 
