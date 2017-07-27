@@ -188,14 +188,14 @@ namespace RoslynPad.Roslyn
             return _defaultReferenceAssemblies.Any(x => x.GetName().Name == text);
         }
 
-        private static MetadataReferenceResolver CreateMetadataReferenceResolver(Workspace workspace, string workingDirectory)
+        private static MetadataReferenceResolver CreateMetadataReferenceResolver(Workspace workspace, string workingDirectory, string searchPath)
         {
             var resolver = Activator.CreateInstance(
                 // can't access this type due to a name collision with Scripting assembly
                 // can't use extern alias because of project.json
                 // ReSharper disable once AssignNullToNotNullAttribute
                 Type.GetType("Microsoft.CodeAnalysis.RelativePathResolver, Microsoft.CodeAnalysis.Workspaces"),
-                ImmutableArray<string>.Empty,
+                ImmutableArray.Create(searchPath),
                 workingDirectory);
             return (MetadataReferenceResolver)Activator.CreateInstance(typeof(WorkspaceMetadataFileReferenceResolver),
                 workspace.Services.GetService<IMetadataService>(),
@@ -344,13 +344,13 @@ namespace RoslynPad.Roslyn
 
         private CSharpCompilationOptions CreateCompilationOptions(Workspace workspace, string workingDirectory)
         {
-            var metadataReferenceResolver = CreateMetadataReferenceResolver(workspace, workingDirectory);
+            var metadataReferenceResolver = CreateMetadataReferenceResolver(workspace, workingDirectory, Path.GetDirectoryName(GetType().Assembly.Location));
             var compilationOptions = new CSharpCompilationOptions(OutputKind.NetModule,
                 usings: DefaultImports,
                 allowUnsafe: true,
                 sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, workingDirectory),
                 metadataReferenceResolver: metadataReferenceResolver);
-            compilationOptions = compilationOptions.WithUsings("System.Linq", "Infusion.LegacyApi", "Infusion.Packets", "Infusion.Gumps", "Infusion.Packets");
+            compilationOptions = compilationOptions.WithUsings("Infusion.LegacyApi", "Infusion.Packets", "Infusion.Gumps");
             return compilationOptions;
         }
 
