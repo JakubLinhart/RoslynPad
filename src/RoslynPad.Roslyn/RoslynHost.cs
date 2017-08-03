@@ -350,7 +350,7 @@ namespace RoslynPad.Roslyn
                 allowUnsafe: true,
                 sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, workingDirectory),
                 metadataReferenceResolver: metadataReferenceResolver);
-            compilationOptions = compilationOptions.WithUsings("Infusion.LegacyApi", "Infusion.Packets", "Infusion.Gumps");
+            compilationOptions = compilationOptions.WithUsings("Infusion", "Infusion.LegacyApi", "Infusion.Gumps");
             return compilationOptions;
         }
 
