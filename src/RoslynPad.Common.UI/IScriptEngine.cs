@@ -5,6 +5,6 @@ namespace RoslynPad.UI
 {
     public interface IScriptEngine
     {
-        Task<object> Execute(string code, bool echo = true, CancellationTokenSource cancellationTokenSource = null);
+        Task<object> Execute(string code, string filePath, bool wholeFile, CancellationTokenSource cancellationTokenSource = null);
     }
 }
