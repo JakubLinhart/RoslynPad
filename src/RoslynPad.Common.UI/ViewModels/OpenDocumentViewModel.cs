@@ -303,7 +303,7 @@ namespace RoslynPad.UI
             try
             {
                 var cancellationToken = _cts.Token;
-                return ScriptEngine.Execute(code, Document.Path, !echo, _cts);
+                return ScriptEngine.Execute(code, Document?.Path, !echo, _cts);
 
             }
             finally
