@@ -1,4 +1,5 @@
 ﻿using System.Composition;
+using System.Linq;
 using System.Windows;
 using Avalon.Windows.Dialogs;
 using RoslynPad.UI;
@@ -29,7 +30,7 @@ namespace RoslynPad
 
         public bool? Show()
         {
-            return _dialog.ShowDialog(Application.Current.MainWindow);
+            return _dialog.ShowDialog(Application.Current.Windows.OfType<MainWindow>().First());
         }
     }
 }

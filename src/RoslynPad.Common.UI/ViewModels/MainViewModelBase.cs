@@ -11,7 +11,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using RoslynPad.Roslyn;
 using RoslynPad.Utilities;
-using NuGet.Packaging;
 using HttpClient = System.Net.Http.HttpClient;
 
 namespace RoslynPad.UI
@@ -19,13 +18,11 @@ namespace RoslynPad.UI
     public class MainViewModelBase : NotificationObject
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly ITelemetryProvider _telemetryProvider;
         private readonly ICommandProvider _commands;
         private readonly DocumentFileWatcher _documentFileWatcher;
         private static readonly Version _currentVersion = new Version(13, 3);
         private static readonly string _currentVersionVariant = "";
 
-        public const string NuGetPathVariableName = "$NuGet";
         private const string ConfigFileName = "RoslynPad.json";
 
         private OpenDocumentViewModel _currentOpenDocument;
@@ -44,7 +41,6 @@ namespace RoslynPad.UI
             get => _documentRoot;
             private set => SetProperty (ref _documentRoot, value);
         }
-        public NuGetConfiguration NuGetConfiguration { get; }
         public RoslynHost RoslynHost { get; private set; }
 
         public bool IsInitialized
@@ -57,56 +53,45 @@ namespace RoslynPad.UI
             }
         }
 
-        public MainViewModelBase(IServiceProvider serviceProvider, ITelemetryProvider telemetryProvider, ICommandProvider commands, IApplicationSettings settings, NuGetViewModel nugetViewModel, DocumentFileWatcher documentFileWatcher)
+        public MainViewModelBase(IServiceProvider serviceProvider, ICommandProvider commands, IApplicationSettings settings, DocumentFileWatcher documentFileWatcher)
         {
             _serviceProvider = serviceProvider;
-            _telemetryProvider = telemetryProvider;
             _commands = commands;
             _documentFileWatcher = documentFileWatcher;
 
             settings.LoadFrom(Path.Combine(GetDefaultDocumentPath(), ConfigFileName));
             Settings = settings;
 
-            _telemetryProvider.Initialize(_currentVersion.ToString(), settings);
-            _telemetryProvider.LastErrorChanged += () =>
-            {
-                OnPropertyChanged(nameof(LastError));
-                OnPropertyChanged(nameof(HasError));
-            };
-
-            NuGet = nugetViewModel;
-            NuGetConfiguration = new NuGetConfiguration(NuGet.GlobalPackageFolder, NuGetPathVariableName);
-
             NewDocumentCommand = commands.Create(CreateNewDocument);
             OpenFileCommand = commands.CreateAsync(OpenFile);
             CloseCurrentDocumentCommand = commands.CreateAsync(CloseCurrentDocument);
             CloseDocumentCommand = commands.CreateAsync<OpenDocumentViewModel>(CloseDocument);
-            ClearErrorCommand = commands.Create(() => _telemetryProvider.ClearLastError());
             ReportProblemCommand = commands.Create(ReportProblem);
             EditUserDocumentPathCommand = commands.Create(EditUserDocumentPath);
             ToggleOptimizationCommand = commands.Create(() => settings.OptimizeCompilation = !settings.OptimizeCompilation);
 
             _editorFontSize = Settings.EditorFontSize;
 
-            DocumentRoot = CreateDocumentRoot();
-
             OpenDocuments = new ObservableCollection<OpenDocumentViewModel>();
             OpenDocuments.CollectionChanged += (sender, args) => OnPropertyChanged(nameof(HasNoOpenDocuments));
         }
 
-        public async Task Initialize()
+        public async Task Initialize(IScriptEngine scriptEngine)
         {
             if (IsInitialized) return;
 
             try
             {
+                this.scriptEngine = scriptEngine;
+                DocumentRoot = CreateDocumentRoot();
+
                 await InitializeInternal().ConfigureAwait(true);
 
                 IsInitialized = true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                _telemetryProvider.ReportError(e);
+                // just swallow it
             }
         }
 
@@ -114,8 +99,12 @@ namespace RoslynPad.UI
 
         private async Task InitializeInternal()
         {
-            RoslynHost = await Task.Run(() => new RoslynHost(NuGetConfiguration, CompositionAssemblies,
-                RoslynHostReferences.Default.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) })))
+            RoslynHost = await Task.Run(() => new RoslynHost(null, CompositionAssemblies,
+                RoslynHostReferences.Default.With(typeNamespaceImports: new[] { typeof(Runtime.ObjectExtensions) },
+                    assemblyReferences: new[] {
+                        Assembly.Load(new AssemblyName("Infusion")),
+                        Assembly.Load(new AssemblyName("Infusion.LegacyApi")),
+                        Assembly.Load(new AssemblyName("System.Collections.Immutable")) })))
                 .ConfigureAwait(true);
 
             await OpenAutoSavedDocuments().ConfigureAwait(true);
@@ -135,7 +124,8 @@ namespace RoslynPad.UI
         {
             var documents = await Task.Run(() => LoadAutoSavedDocuments(DocumentRoot.Path)).ConfigureAwait(true);
 
-            OpenDocuments.AddRange(documents);
+            foreach (var document in documents)
+                OpenDocuments.Add(document);
 
             if (OpenDocuments.Count == 0)
             {
@@ -157,6 +147,7 @@ namespace RoslynPad.UI
         {
             var d = _serviceProvider.GetService<OpenDocumentViewModel>();
             d.SetDocument(documentViewModel);
+            d.ScriptEngine = scriptEngine;
             return d;
         }
 
@@ -225,8 +216,13 @@ namespace RoslynPad.UI
             return root;
         }
 
+        public string DocumentPath { get; set; }
+
         private string GetUserDocumentPath()
         {
+            if (!string.IsNullOrEmpty(DocumentPath) && Directory.Exists(DocumentPath))
+                return DocumentPath;
+
             if (_documentPath == null)
             {
 
@@ -261,7 +257,6 @@ namespace RoslynPad.UI
             if (string.IsNullOrEmpty(documentsPath))
             {
                 documentsPath = "/";
-                _telemetryProvider.ReportError(new InvalidOperationException("Unable to locate the user documents folder; Using root"));
             }
 
             return Path.Combine(documentsPath, "RoslynPad");
@@ -288,9 +283,8 @@ namespace RoslynPad.UI
             }
         }
 
-        public NuGetViewModel NuGet { get; }
-
         public ObservableCollection<OpenDocumentViewModel> OpenDocuments { get; }
+        private IScriptEngine scriptEngine;
 
         public OpenDocumentViewModel CurrentOpenDocument
         {
@@ -418,18 +412,6 @@ namespace RoslynPad.UI
         {
             await AutoSaveOpenDocuments().ConfigureAwait(false);
         }
-
-        public Exception LastError
-        {
-            get
-            {
-                var exception = _telemetryProvider.LastError;
-                var aggregateException = exception as AggregateException;
-                return aggregateException?.Flatten() ?? exception;
-            }
-        }
-
-        public bool HasError => LastError != null;
 
         public IDelegateCommand ClearErrorCommand { get; }
 

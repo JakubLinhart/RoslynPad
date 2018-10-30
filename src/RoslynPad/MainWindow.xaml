@@ -8,12 +8,13 @@
         xmlns:av="http://schemas.codeplex.com/wpfcontrib/xaml/presentation"
         xmlns:ui="clr-namespace:RoslynPad.UI;assembly=RoslynPad.Common.UI"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance ui:MainViewModel}"
+        d:DataContext="{d:DesignInstance roslynPad:MainViewModel}"
         TextOptions.TextFormattingMode="Display"
         UseLayoutRounding="True"
         Title="{Binding WindowTitle, Mode=OneTime}"
         Height="600"
         Width="800"
+        Icon="Resources/RoslynPad.ico"
         Name="This">
 
     <FrameworkElement.InputBindings>
@@ -37,27 +38,6 @@
     <av:InlineModalDecorator Target="{Binding ElementName=This, Mode=OneTime}"
                              IsEnabled="{Binding IsInitialized}">
         <DockPanel>
-            <Border Padding="3"
-                    Margin="1"
-                    Background="#eebbbb"
-                    DockPanel.Dock="Bottom"
-                    Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <DockPanel LastChildFill="False">
-                    <Button Margin="3"
-                            Content="View details"
-                            DockPanel.Dock="Right"
-                            Background="Transparent"
-                            Click="ViewErrorDetails_OnClick" />
-                    <Button Background="Transparent"
-                            Content=""
-                            FontFamily="Segoe UI Symbol"
-                            Command="{Binding ClearErrorCommand, Mode=OneTime}"
-                            Margin="3" />
-                    <TextBlock VerticalAlignment="Center"
-                               TextTrimming="CharacterEllipsis"
-                               Text="{Binding LastError.Message}" />
-                </DockPanel>
-            </Border>
             <Grid>
                 <dock:DockingManager Name="DockingManager"
                                      DocumentsSource="{Binding OpenDocuments, Mode=OneTime}"
@@ -96,7 +76,7 @@
                                                        CanFloat="False"
                                                        CanAutoHide="True"
                                                        AutoHideWidth="200"
-                                                       Title="Documents">
+                                                       Title="Scripts">
                                     <DockPanel x:Name="DocumentTree">
                                         <AdornerDecorator>
                                             <roslynPad:DocumentTreeView />
@@ -147,9 +127,6 @@
                                 </Style.Triggers>
                             </Style>
                         </ToggleButton.Style>
-                        <Image Source="{StaticResource Time}"
-                               Width="16"
-                               Height="16" />
                     </ToggleButton>
 
                     <Button Margin="20 0 0 0"
@@ -189,26 +166,6 @@
                             Value="{Binding EditorFontSize}" />
                     <TextBlock Text="{Binding EditorFontSize}"
                                Margin="5 0 0 0" />
-
-                    <Menu Margin="20 0 0 0"
-                          Background="Transparent">
-                        <MenuItem Padding="0"
-                                  BorderThickness="0"
-                                  ToolTip="Send Feedback"
-                                  ToolTipService.Placement="Top">
-                            <MenuItem.Header>
-                                <Image Source="{StaticResource Feedback}"
-                                       Width="16"
-                                       Height="16" />
-                            </MenuItem.Header>
-                            <MenuItem IsCheckable="True"
-                                      IsChecked="{Binding SendTelemetry}"
-                                      Header="Send Telemetry"
-                                      ToolTip="Send errors to the author (stack traces of internal RoslynPad errors - not your code)" />
-                            <MenuItem Header="Report a problem..."
-                                      Command="{Binding ReportProblemCommand}" />
-                        </MenuItem>
-                    </Menu>
                 </StackPanel>
 
             </Grid>

@@ -80,11 +80,6 @@
             <DockPanel>
                 <ToggleButton DockPanel.Dock="Right"
                               Style="{StaticResource SearchButtonStyle}"
-                              IsChecked="{Binding SearchUsingRegex}"
-                              ToolTip="Use Regular Expressions"
-                              Content="{StaticResource RegularExpression}" />
-                <ToggleButton DockPanel.Dock="Right"
-                              Style="{StaticResource SearchButtonStyle}"
                               IsChecked="{Binding SearchFileContents}"
                               ToolTip="Search File Contents"
                               Content="{StaticResource FileCollection}" />

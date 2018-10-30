@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
+using Microsoft.CodeAnalysis.Scripting;
 using RoslynPad.Roslyn.Diagnostics;
 using System;
 using System.Collections.Concurrent;
@@ -35,7 +36,6 @@ namespace RoslynPad.Roslyn
                 // RoslynPad.Roslyn
                 typeof(RoslynHost).GetTypeInfo().Assembly);
 
-        private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ConcurrentDictionary<DocumentId, RoslynWorkspace> _workspaces;
         private readonly ConcurrentDictionary<DocumentId, Action<DiagnosticsUpdatedArgs>> _diagnosticsUpdatedNotifiers;
         private readonly ParseOptions _parseOptions;
@@ -73,7 +73,6 @@ namespace RoslynPad.Roslyn
             IEnumerable<Assembly> additionalAssemblies = null,
             RoslynHostReferences references = null)
         {
-            _nuGetConfiguration = nuGetConfiguration;
             if (references == null) references = RoslynHostReferences.Default;
 
             _workspaces = new ConcurrentDictionary<DocumentId, RoslynWorkspace>();
@@ -294,7 +293,8 @@ namespace RoslynPad.Roslyn
                 usings: addDefaultImports ? DefaultImports : ImmutableArray<string>.Empty,
                 allowUnsafe: true,
                 sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, args.WorkingDirectory),
-                metadataReferenceResolver: new NuGetScriptMetadataResolver(_nuGetConfiguration, args.WorkingDirectory, useCache: true));
+                metadataReferenceResolver: ScriptMetadataResolver.Default.WithBaseDirectory( args.WorkingDirectory ));
+            compilationOptions = compilationOptions.WithUsings("Infusion", "Infusion.LegacyApi", "Infusion.LegacyApi.Events", "Infusion.Gumps");
             return compilationOptions;
         }
 

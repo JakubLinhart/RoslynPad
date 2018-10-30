@@ -30,7 +30,6 @@ namespace RoslynPad.UI
         private const int LiveModeDelayMsDefault = 2000;
         private const int EditorFontSizeDefault = 12;
 
-        private readonly ITelemetryProvider _telemetryProvider;
         private string _path;
 
         private bool _sendErrors;
@@ -47,9 +46,8 @@ namespace RoslynPad.UI
         private bool _searchWhileTyping;
 
         [ImportingConstructor]
-        public ApplicationSettings(ITelemetryProvider telemetryProvider)
+        public ApplicationSettings()
         {
-            _telemetryProvider = telemetryProvider;
         }
 
         public void LoadFrom(string path)
@@ -156,10 +154,9 @@ namespace RoslynPad.UI
                     serializer.Populate(reader, this);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 LoadDefaultSettings();
-                _telemetryProvider.ReportError(e);
             }
         }
 
@@ -182,9 +179,9 @@ namespace RoslynPad.UI
                     serializer.Serialize(writer, this);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                _telemetryProvider.ReportError(e);
+                // just swallow it
             }
         }
     }

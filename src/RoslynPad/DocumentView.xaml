@@ -11,7 +11,7 @@
     <FrameworkElement.InputBindings>
         <KeyBinding Key="F5"
                     Command="{Binding RunCommand, Mode=OneTime}" />
-        <KeyBinding Gesture="Shift+F5"
+        <KeyBinding Gesture="Ctrl+F5"
                     Command="{Binding RestartHostCommand, Mode=OneTime}" />
         <KeyBinding Gesture="Ctrl+S"
                     Command="{Binding SaveCommand, Mode=OneTime}" />
@@ -41,10 +41,7 @@
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition />
-                <RowDefinition Height="5" />
-                <RowDefinition Name="ResultPaneRow"
-                               Height="0" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <ToolBar Grid.ColumnSpan="3"
                      Background="Transparent"
@@ -97,118 +94,9 @@
                         </MenuItem>
                     </MenuItem>
                 </Menu>
-                <Button Command="{Binding RestartHostCommand, Mode=OneTime}"
-                        ToolTip="Restart host process (Shift+F5)"
-                        Content="{StaticResource Restart}" />
-                <ComboBox ItemsSource="{Binding AvailablePlatforms, Mode=OneTime}"
-                          SelectedItem="{Binding Platform}" />
-                <Button Content="{StaticResource BuildSolution}"
-                        Command="{Binding CompileAndSaveCommand, Mode=OneTime}"
-                        ToolTip="Compile and save assembly" />
-                <Separator />
                 <Button Command="{Binding SaveCommand, Mode=OneTime}"
                         ToolTip="Save (Ctrl+S)"
                         Content="{StaticResource Save}" />
-                <Separator />
-                <Menu Background="Transparent"
-                      Name="RootMenu"
-                      IsEnabled="{Binding NuGet.IsEnabled}">
-                    <MenuItem Name="RootNuGetMenu"
-                              IsSubmenuOpen="{Binding NuGet.IsPackagesMenuOpen}"
-                              ItemsSource="{Binding NuGet.Packages}"
-                              Header="{Binding NuGet, Mode=OneTime}"
-                              ToolTip="NuGet Packages"
-                              IsTextSearchEnabled="True">
-                        <MenuItem.HeaderTemplate>
-                            <DataTemplate DataType="{x:Type ui:NuGetDocumentViewModel}">
-                                <Grid>
-                                    <Image Source="{StaticResource NuGet}" />
-                                    <ProgressBar VerticalAlignment="Bottom"
-                                                 Height="4"
-                                                 BorderThickness="0"
-                                                 IsIndeterminate="{Binding IsBusy}"
-                                                 Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                </Grid>
-                            </DataTemplate>
-                        </MenuItem.HeaderTemplate>
-                        <ItemsControl.ItemContainerStyle>
-                            <Style TargetType="MenuItem">
-                                <Setter Property="Command"
-                                        Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand, Mode=OneTime}" />
-                                <Setter Property="CommandParameter"
-                                        Value="{Binding Mode=OneTime}" />
-                                <Setter Property="Icon"
-                                        Value="{Binding Mode=OneTime}" />
-                            </Style>
-                        </ItemsControl.ItemContainerStyle>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type ui:PackageData}">
-                                <TextBlock>
-                                    <Run Text="{Binding Id, Mode=OneTime}" />
-                                    <Run Text="{Binding Version, Mode=OneTime}" />
-                                </TextBlock>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                        <ItemsControl.Resources>
-                            <DataTemplate DataType="{x:Type ui:PackageData}">
-                                <Menu Background="Transparent"
-                                      ToolTip="Other versions">
-                                    <MenuItem ItemsSource="{Binding OtherVersions, Mode=OneTime}"
-                                              DisplayMemberPath="Version"
-                                              Padding="2">
-                                        <MenuItem.Header>
-                                            <TextBlock FontWeight="Bold"
-                                                       FontFamily="Segoe UI Symbol"
-                                                       Text=""
-                                                       FontSize="8" />
-                                        </MenuItem.Header>
-                                        <ItemsControl.ItemContainerStyle>
-                                            <Style TargetType="MenuItem">
-                                                <Setter Property="Command"
-                                                        Value="{Binding ElementName=RootMenu, Path=DataContext.NuGet.InstallPackageCommand, Mode=OneTime}" />
-                                                <Setter Property="CommandParameter"
-                                                        Value="{Binding Mode=OneTime}" />
-                                            </Style>
-                                        </ItemsControl.ItemContainerStyle>
-                                    </MenuItem>
-                                </Menu>
-                            </DataTemplate>
-                        </ItemsControl.Resources>
-                    </MenuItem>
-                </Menu>
-                <Grid>
-                    <TextBox Name="NuGetSearch"
-                             IsEnabled="{Binding NuGet.IsEnabled}"
-                             BorderBrush="#eee"
-                             PreviewKeyDown="SearchTerm_OnPreviewKeyDown"
-                             Text="{Binding NuGet.SearchTerm, Delay=500, UpdateSourceTrigger=PropertyChanged}"
-                             Style="{StaticResource {x:Static ToolBar.TextBoxStyleKey}}"
-                             Width="200" />
-                    <TextBlock IsHitTestVisible="False"
-                               Text="Search NuGet (Ctrl+T)"
-                               VerticalAlignment="Center"
-                               Margin="10,0,0,0"
-                               Foreground="DarkGray">
-                        <TextBlock.Style>
-                            <Style TargetType="{x:Type TextBlock}">
-                                <Setter Property="Visibility"
-                                        Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Text, ElementName=NuGetSearch}"
-                                                 Value="">
-                                        <Setter Property="Visibility"
-                                                Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBlock.Style>
-                    </TextBlock>
-                </Grid>
-                <Decorator VerticalAlignment="Center">
-                    <CheckBox IsChecked="{Binding NuGet.Prerelease}"
-                              ToolTip="Include prerelease packages"
-                              Content="Prerelease" />
-                </Decorator>
                 <Separator />
                 <Button Content="{StaticResource FormatDocument}"
                         ToolTip="Format Document (Ctrl+D)"
@@ -230,123 +118,6 @@
                                      Grid.Row="1"
                                      Grid.Column="0"
                                      Loaded="Editor_OnLoaded" />
-            <GridSplitter Grid.Row="2"
-                          Grid.Column="0"
-                          Background="#ccc"
-                          ResizeBehavior="PreviousAndNext"
-                          ResizeDirection="Rows"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch" />
-
-            <TabControl Grid.Column="0"
-                        Grid.Row="3"
-                        TabStripPlacement="Bottom"
-                        SelectionChanged="OnTabSelectionChanged">
-                <TabItem Header="Results">
-                    <DockPanel Grid.IsSharedSizeScope="True">
-                        <ScrollViewer DockPanel.Dock="Top"
-                                      Name="HeaderScroll"
-                                      HorizontalScrollBarVisibility="Hidden"
-                                      VerticalScrollBarVisibility="Disabled">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="150"
-                                                      SharedSizeGroup="ResultNameGroup" />
-                                    <ColumnDefinition Width="1" />
-                                    <ColumnDefinition Width="450"
-                                                      SharedSizeGroup="ResultValueGroup" />
-                                    <ColumnDefinition Width="1" />
-                                    <ColumnDefinition Width="Auto"
-                                                      SharedSizeGroup="ResultTypeGroup" />
-                                    <ColumnDefinition Width="1" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="Name"
-                                           Margin="20 0 20 0"
-                                           HorizontalAlignment="Center"
-                                           Grid.Column="0" />
-                                <GridSplitter Grid.Column="1"
-                                              ResizeBehavior="PreviousAndNext"
-                                              ResizeDirection="Columns"
-                                              HorizontalAlignment="Stretch"
-                                              VerticalAlignment="Stretch"
-                                              Background="DarkGray" />
-                                <TextBlock Text="Value"
-                                           Margin="20 0 20 0"
-                                           HorizontalAlignment="Center"
-                                           Grid.Column="2" />
-                                <GridSplitter Grid.Column="3"
-                                              ResizeBehavior="PreviousAndNext"
-                                              ResizeDirection="Columns"
-                                              HorizontalAlignment="Stretch"
-                                              VerticalAlignment="Stretch"
-                                              Background="DarkGray" />
-                                <TextBlock Text="Type"
-                                           Margin="20 0 20 0"
-                                           HorizontalAlignment="Center"
-                                           Grid.Column="4" />
-                                <GridSplitter Grid.Column="5"
-                                              ResizeBehavior="PreviousAndCurrent"
-                                              ResizeDirection="Columns"
-                                              HorizontalAlignment="Stretch"
-                                              VerticalAlignment="Stretch"
-                                              Background="DarkGray" />
-                            </Grid>
-                        </ScrollViewer>
-                        <controls:TreeListView x:Name="ResultTree"
-                                               ItemsSource="{Binding Results}"
-                                               KeyDown="OnTreeViewKeyDown"
-                                               MouseDoubleClick="OnTreeViewDoubleClick"
-                                               ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                               VirtualizingPanel.IsVirtualizing="True"
-                                               VirtualizingPanel.VirtualizationMode="Recycling"
-                                               BorderBrush="#cccccc"
-                                               ScrollViewer.ScrollChanged="ScrollViewer_OnScrollChanged"
-                                               ContextMenuOpening="ResultTree_OnContextMenuOpening">
-                            <FrameworkElement.CommandBindings>
-                                <CommandBinding Command="Copy"
-                                                Executed="CopyCommand" />
-                            </FrameworkElement.CommandBindings>
-                            <FrameworkElement.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Name="CopyValue"
-                                              Header="Copy Value"
-                                              InputGestureText="Ctrl+C"
-                                              Click="CopyClick">
-                                        <MenuItem.Icon>
-                                            <Image Source="{StaticResource Copy}"
-                                                   Height="12" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                    <MenuItem Name="CopyValueWithChildren"
-                                              Header="Copy Value with Children"
-                                              Click="CopyClick" />
-                                    <MenuItem Name="CopyAllValues"
-                                              Header="Copy All Values"
-                                              Click="CopyAllClick" />
-                                    <MenuItem Name="CopyAllValuesWithChildren"
-                                              Header="Copy All Values with Children"
-                                              InputGestureText="Ctrl+Shift+C"
-                                              Click="CopyAllClick" />
-                                </ContextMenu>
-                            </FrameworkElement.ContextMenu>
-                            <ItemsControl.ItemContainerStyle>
-                                <Style TargetType="controls:TreeListViewItem"
-                                       BasedOn="{StaticResource {x:Type controls:TreeListViewItem}}">
-                                    <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
-                                    <Setter Property="IsExpanded"
-                                            Value="{Binding IsExpanded, Mode=OneTime}" />
-                                    <EventSetter Event="KeyDown"
-                                                 Handler="OnTreeViewKeyDown" />
-                                </Style>
-                            </ItemsControl.ItemContainerStyle>
-                        </controls:TreeListView>
-                    </DockPanel>
-                </TabItem>
-                <TabItem Name="ILViewerTab"
-                         Header="IL"
-                         IsSelected="{Binding ShowIL}" />
-            </TabControl>
         </Grid>
     </DockPanel>
 </UserControl>

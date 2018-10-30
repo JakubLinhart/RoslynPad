@@ -1,4 +1,5 @@
 ﻿using System.Composition;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using Microsoft.Win32;
@@ -47,7 +48,7 @@ namespace RoslynPad
 
         public Task<string> ShowAsync()
         {
-            if (_dialog.ShowDialog(Application.Current.MainWindow) == true)
+            if (_dialog.ShowDialog(Application.Current.Windows.OfType<MainWindow>().First()) == true)
             {
                 return Task.FromResult(_dialog.FileName);
             }

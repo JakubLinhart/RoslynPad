@@ -23,8 +23,9 @@ namespace RoslynPad
         private readonly MainViewModelBase _viewModel;
         private bool _isClosing;
         private bool _isClosed;
+        private IScriptEngine _scriptEngine;
 
-        internal MainWindow()
+        public MainWindow(IScriptEngine scriptEngine, string documentPath = null)
         {
             Loaded += OnLoaded;
 
@@ -34,6 +35,9 @@ namespace RoslynPad
             var locator = container.CreateContainer().GetExport<IServiceProvider>();
 
             _viewModel = locator.GetService<MainViewModelBase>();
+            _viewModel.DocumentPath = documentPath;
+
+            _scriptEngine = scriptEngine;
 
             DataContext = _viewModel;
             InitializeComponent();
@@ -47,7 +51,7 @@ namespace RoslynPad
         {
             Loaded -= OnLoaded;
 
-            await _viewModel.Initialize().ConfigureAwait(false);
+            await _viewModel.Initialize(_scriptEngine).ConfigureAwait(false);
         }
 
         protected override async void OnClosing(CancelEventArgs e)
@@ -144,27 +148,12 @@ namespace RoslynPad
             document.Root?.Element("FloatingWindows")?.Remove();
             _viewModel.Settings.DockLayout = document.ToString();
         }
-
-        protected override void OnClosed(EventArgs e)
-        {
-            base.OnClosed(e);
-
-            Application.Current.Shutdown();
-        }
         
         private async void DockingManager_OnDocumentClosing(object sender, DocumentClosingEventArgs e)
         {
             e.Cancel = true;
             var document = (OpenDocumentViewModel)e.Document.Content;
             await _viewModel.CloseDocument(document).ConfigureAwait(false);
-        }
-
-        private void ViewErrorDetails_OnClick(object sender, RoutedEventArgs e)
-        {
-            if (!_viewModel.HasError) return;
-
-            TaskDialog.ShowInline(this, "Unhandled Exception",
-                _viewModel.LastError.ToAsyncString(), string.Empty, TaskDialogButtons.Close);
         }
 
         private void ViewUpdateClick(object sender, RoutedEventArgs e)
