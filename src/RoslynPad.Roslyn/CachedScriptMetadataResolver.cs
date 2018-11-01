@@ -1,26 +1,20 @@
 ﻿using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Scripting;
-using System;
 using System.Collections.Concurrent;
 using System.Linq;
 
 namespace RoslynPad.Roslyn
 {
-    public class NuGetScriptMetadataResolver : MetadataReferenceResolver
+    public class CachedScriptMetadataResolver : MetadataReferenceResolver
     {
-        private readonly NuGetConfiguration _nuGetConfiguration;
         private readonly ScriptMetadataResolver _inner;
         private readonly ConcurrentDictionary<string, ImmutableArray<PortableExecutableReference>> _cache;
 
-        public NuGetScriptMetadataResolver(NuGetConfiguration nuGetConfiguration, string workingDirectory, bool useCache = false)
+        public CachedScriptMetadataResolver(string workingDirectory)
         {
-            _nuGetConfiguration = nuGetConfiguration;
             _inner = ScriptMetadataResolver.Default.WithBaseDirectory(workingDirectory);
-            if (useCache)
-            {
-                _cache = new ConcurrentDictionary<string, ImmutableArray<PortableExecutableReference>>();
-            }
+            _cache = new ConcurrentDictionary<string, ImmutableArray<PortableExecutableReference>>();
         }
 
         public override bool Equals(object other) => _inner.Equals(other);
@@ -42,8 +36,6 @@ namespace RoslynPad.Roslyn
 
         public override ImmutableArray<PortableExecutableReference> ResolveReference(string reference, string baseFilePath, MetadataReferenceProperties properties)
         {
-            reference = NuGetConfigurationExtensions.ResolveReference(_nuGetConfiguration, reference);
-
             if (_cache == null)
             {
                 return _inner.ResolveReference(reference, baseFilePath, properties);

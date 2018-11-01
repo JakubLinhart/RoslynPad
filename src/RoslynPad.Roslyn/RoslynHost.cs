@@ -293,7 +293,7 @@ namespace RoslynPad.Roslyn
                 usings: addDefaultImports ? DefaultImports : ImmutableArray<string>.Empty,
                 allowUnsafe: true,
                 sourceReferenceResolver: new SourceFileResolver(ImmutableArray<string>.Empty, args.WorkingDirectory),
-                metadataReferenceResolver: ScriptMetadataResolver.Default.WithBaseDirectory( args.WorkingDirectory ));
+                metadataReferenceResolver: new CachedScriptMetadataResolver(args.WorkingDirectory));
             compilationOptions = compilationOptions.WithUsings("Infusion", "Infusion.LegacyApi", "Infusion.LegacyApi.Events", "Infusion.Gumps");
             return compilationOptions;
         }

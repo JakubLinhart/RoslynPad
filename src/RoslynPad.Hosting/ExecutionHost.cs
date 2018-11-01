@@ -508,7 +508,7 @@ namespace RoslynPad.Hosting
                     .WithImports(initializationParameters.Imports);
                 if (initializationParameters.NuGetConfiguration != null)
                 {
-                    var resolver = new NuGetScriptMetadataResolver(initializationParameters.NuGetConfiguration, initializationParameters.WorkingDirectory);
+                    var resolver = new CachedScriptMetadataResolver(initializationParameters.WorkingDirectory);
                     scriptOptions = scriptOptions.WithMetadataResolver(resolver);
                 }
                 _scriptOptions = scriptOptions;

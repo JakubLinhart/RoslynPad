@@ -168,9 +168,6 @@
     <ProjectReference Include="..\RoslynPad.Common\RoslynPad.Common.csproj">
       <Name>RoslynPad.Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\RoslynPad.Hosting\RoslynPad.Hosting.csproj">
-      <Name>RoslynPad.Hosting</Name>
-    </ProjectReference>
     <ProjectReference Include="..\RoslynPad.Editor.Windows\RoslynPad.Editor.Windows.csproj">
       <Name>RoslynPad.Editor.Windows</Name>
     </ProjectReference>
