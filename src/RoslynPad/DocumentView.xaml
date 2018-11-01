@@ -49,51 +49,15 @@
                      BorderThickness="0 0 0 1">
                 <Button Command="{Binding RunCommand, Mode=OneTime}"
                         ToolTip="Run (F5)">
-                    <Grid>
                         <Image>
                             <Image.Style>
                                 <Style TargetType="Image">
                                     <Setter Property="Source"
                                             Value="{StaticResource Run}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsLiveMode}"
-                                                     Value="True">
-                                            <Setter Property="Source"
-                                                    Value="{StaticResource Rocket}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
                                 </Style>
                             </Image.Style>
                         </Image>
-                        <ProgressBar VerticalAlignment="Bottom"
-                                     Height="4"
-                                     IsIndeterminate="{Binding IsRunning}"
-                                     BorderThickness="0"
-                                     Visibility="{Binding IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    </Grid>
                 </Button>
-                <Menu Background="Transparent">
-                    <MenuItem Header="▾"
-                              Padding="0"
-                              FontFamily="Segoe UI Symbol">
-                        <MenuItem Command="{Binding ToggleLiveModeCommand}"
-                                  Icon="{StaticResource Rocket}">
-                            <MenuItem.Style>
-                                <Style TargetType="MenuItem">
-                                    <Setter Property="Header"
-                                            Value="Live Mode" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsLiveMode}"
-                                                     Value="True">
-                                            <Setter Property="Header"
-                                                    Value="Turn off Live Mode" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </MenuItem.Style>
-                        </MenuItem>
-                    </MenuItem>
-                </Menu>
                 <Button Command="{Binding SaveCommand, Mode=OneTime}"
                         ToolTip="Save (Ctrl+S)"
                         Content="{StaticResource Save}" />

@@ -131,13 +131,20 @@ namespace RoslynPad.Editor
             var token = cts.Token;
             _braceMatchingCts = cts;
 
-            var document = _roslynHost.GetDocument(_documentId);
-            var text = await document.GetTextAsync().ConfigureAwait(false);
-            var caretOffset = CaretOffset;
-            if (caretOffset <= text.Length)
+            try
             {
-                var result = await _braceMatchingService.GetAllMatchingBracesAsync(document, caretOffset, token).ConfigureAwait(true);
-                _braceMatcherHighlighter.SetHighlight(result.leftOfPosition, result.rightOfPosition);
+                var document = _roslynHost.GetDocument(_documentId);
+                var text = await document.GetTextAsync().ConfigureAwait(false);
+                var caretOffset = CaretOffset;
+                if (caretOffset <= text.Length)
+                {
+                    var result = await _braceMatchingService.GetAllMatchingBracesAsync(document, caretOffset, token).ConfigureAwait(true);
+                    _braceMatcherHighlighter.SetHighlight(result.leftOfPosition, result.rightOfPosition);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // just swallow it
             }
         }
 

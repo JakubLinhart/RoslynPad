@@ -36,8 +36,6 @@ namespace RoslynPad.UI
             ? Path.GetDirectoryName(Document.Path)
             : MainViewModel.DocumentRoot.Path;
 
-        public IDelegateCommand ToggleLiveModeCommand { get; }
-
         public DocumentViewModel Document { get; private set; }
 
         public string ILText
