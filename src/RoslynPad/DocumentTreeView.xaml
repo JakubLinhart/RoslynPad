@@ -9,11 +9,10 @@
              xmlns:system="clr-namespace:System;assembly=mscorlib"
              xmlns:roslynPad="clr-namespace:RoslynPad"
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance ui:MainViewModel}"
+             d:DataContext="{d:DesignInstance roslynPad:MainViewModel}"
              d:DesignHeight="300"
              d:DesignWidth="300">
     <FrameworkElement.Resources>
-
         <roslynPad:FilterCollectionViewConverter x:Key="FilterCollectionViewConverter"
                                                  FilterProperty="IsSearchMatch"
                                                  Filter="FilterCollectionViewSourceConverter_OnFilter" />
@@ -81,20 +80,22 @@
                 <ToggleButton DockPanel.Dock="Right"
                               Style="{StaticResource SearchButtonStyle}"
                               IsChecked="{Binding SearchFileContents}"
-                              ToolTip="Search File Contents"
-                              Content="{StaticResource FileCollection}" />
+                              ToolTip="Search File Contents">
+                    <Image Source="{StaticResource FileCollection}" />
+                </ToggleButton>
                 <Button DockPanel.Dock="Right"
                         Style="{StaticResource SearchButtonStyle}"
                         Command="{Binding ClearSearchCommand}"
                         Visibility="{Binding CanClearSearch, Converter={StaticResource BooleanToVisibilityConverter}}"
-                        ToolTip="Clear search (Esc)"
-                        Content="{StaticResource Close}" />
+                        ToolTip="Clear search (Esc)">
+                    <Image Source="{StaticResource Close}" />
+                </Button>
                 <Grid>
                     <xctk:WatermarkTextBox BorderThickness="0"
                                            Validation.ErrorTemplate="{StaticResource ErrorTemplate}"
                                            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}"
                                            KeyDown="Search_OnKeyDown"
-                                           Watermark="Search documents (press Enter)" />
+                                           Watermark="Search scripts (press Enter)" />
                 </Grid>
             </DockPanel>
         </Border>
@@ -110,7 +111,7 @@
                  BorderThickness="0 0 0 1"
                  DockPanel.Dock="Bottom"
                  Margin="0,5,0,0">
-            <Button ToolTip="New Document (Ctrl+N)"
+            <Button ToolTip="New Script (Ctrl+N)"
                     ToolTipService.Placement="Top"
                     Command="{Binding NewDocumentCommand, Mode=OneTime}">
                 <Image Source="{StaticResource CsFile}"
@@ -124,7 +125,7 @@
                        Width="16"
                        Height="16" />
             </Button>
-            <Button ToolTip="Change Documents Location"
+            <Button ToolTip="Change Scripts Location"
                     ToolTipService.Placement="Top"
                     Command="{Binding EditUserDocumentPathCommand, Mode=OneTime}">
                 <Image Source="{StaticResource MoveFolder}"

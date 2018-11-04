@@ -44,7 +44,6 @@ namespace RoslynPad
             DocumentsPane.ToggleAutoHide();
 
             LoadWindowLayout();
-            LoadDockLayout();
         }
 
         private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -60,7 +59,6 @@ namespace RoslynPad
 
             if (!_isClosing)
             {
-                SaveDockLayout();
                 SaveWindowLayout();
                 
                 _isClosing = true;
@@ -118,35 +116,6 @@ namespace RoslynPad
         {
             _viewModel.Settings.WindowBounds = RestoreBounds.ToString(CultureInfo.InvariantCulture);
             _viewModel.Settings.WindowState = WindowState.ToString();
-        }
-
-        private void LoadDockLayout()
-        {
-            var layout = _viewModel.Settings.DockLayout;
-            if (string.IsNullOrEmpty(layout)) return;
-
-            var serializer = new XmlLayoutSerializer(DockingManager);
-            var reader = new StringReader(layout);
-            try
-            {
-                serializer.Deserialize(reader);
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-        private void SaveDockLayout()
-        {
-            var serializer = new XmlLayoutSerializer(DockingManager);
-            var document = new XDocument();
-            using (var writer = document.CreateWriter())
-            {
-                serializer.Serialize(writer);
-            }
-            document.Root?.Element("FloatingWindows")?.Remove();
-            _viewModel.Settings.DockLayout = document.ToString();
         }
         
         private async void DockingManager_OnDocumentClosing(object sender, DocumentClosingEventArgs e)

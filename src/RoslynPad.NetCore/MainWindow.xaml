@@ -18,7 +18,7 @@
     </Window.KeyBindings>
     <DockPanel>
         <Expander DockPanel.Dock="Left"
-                  Header="Documents"
+                  Header="Scripts"
                   IsExpanded="False"
                   ContentTransition="{x:Null}"
                   ExpandDirection="Left">
